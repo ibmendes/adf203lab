@@ -1,9 +1,15 @@
 {
-	"name": "DelimitedText1",
+	"name": "metadataActivityLogCsv",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "CSVBLOB",
+			"referenceName": "dp203stg",
 			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"filename": {
+				"type": "string",
+				"defaultValue": "@item().Name"
+			}
 		},
 		"annotations": [],
 		"type": "DelimitedText",

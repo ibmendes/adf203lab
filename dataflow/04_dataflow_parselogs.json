@@ -1,0 +1,79 @@
+{
+	"name": "04_dataflow_parselogs",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "stg_logdatafile",
+						"type": "DatasetReference"
+					},
+					"name": "LogfileStream"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "sqlDBWebLogs",
+						"type": "DatasetReference"
+					},
+					"name": "sqldbWebLogs"
+				}
+			],
+			"transformations": [
+				{
+					"name": "RenameColumn"
+				},
+				{
+					"name": "SplitLogData"
+				},
+				{
+					"name": "mappingColumns"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          {2024-08-03 06:58:11 10.0.0.4 GET / - 80 - 177.62.223.44 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML} as string,",
+				"          {+like+Gecko)+Chrome/121.0.0.0+Safari/537.36 - 200 0 0 140} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     skipLines: 4) ~> LogfileStream",
+				"LogfileStream select(mapColumn(",
+				"          logdata = {2024-08-03 06:58:11 10.0.0.4 GET / - 80 - 177.62.223.44 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> RenameColumn",
+				"RenameColumn derive(logdata = split(logdata,\" \")) ~> SplitLogData",
+				"SplitLogData derive(LogDate = logdata[1],",
+				"          IPAdress = logdata[9],",
+				"          RequestMethod = logdata[4],",
+				"          RequestResource = logdata[5]) ~> mappingColumns",
+				"mappingColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          LogDate as date,",
+				"          IPAddress as string,",
+				"          RequestMethod as string,",
+				"          RequestResource as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          LogDate,",
+				"          IPAddress = IPAdress,",
+				"          RequestMethod,",
+				"          RequestResource",
+				"     )) ~> sqldbWebLogs"
+			]
+		}
+	}
+}

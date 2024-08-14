@@ -1,0 +1,30 @@
+{
+	"name": "08_databricks notebook",
+	"properties": {
+		"activities": [
+			{
+				"name": "01-activityaLog",
+				"type": "DatabricksNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/igormendes.mbi@outlook.com/jobcluster"
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabricks1",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2024-08-07T03:05:23Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,349 @@
+{
+	"name": "01_Dataflow_Warehouse",
+	"properties": {
+		"description": "azure sql database > sql pool synapse.",
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "sqldbSalesOrderHeader",
+						"type": "DatasetReference"
+					},
+					"name": "SalesOrderHeaderStream"
+				},
+				{
+					"dataset": {
+						"referenceName": "sqldbSalesOrderDetail",
+						"type": "DatasetReference"
+					},
+					"name": "SalesOrderDetails"
+				},
+				{
+					"dataset": {
+						"referenceName": "sqlCostumer",
+						"type": "DatasetReference"
+					},
+					"name": "SqlCostumer"
+				},
+				{
+					"dataset": {
+						"referenceName": "sqlProductCategpry",
+						"type": "DatasetReference"
+					},
+					"name": "SqlProductCategory"
+				},
+				{
+					"dataset": {
+						"referenceName": "SqlProduct",
+						"type": "DatasetReference"
+					},
+					"name": "SqlProduct"
+				},
+				{
+					"dataset": {
+						"referenceName": "sqlDBCostumerDim",
+						"type": "DatasetReference"
+					},
+					"name": "MaxCostumerSK"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "sqldbFactSales",
+						"type": "DatasetReference"
+					},
+					"name": "sqlFactSales",
+					"description": "Export data to sqlFactSales"
+				},
+				{
+					"dataset": {
+						"referenceName": "sqlDBCostumerDim",
+						"type": "DatasetReference"
+					},
+					"name": "SqlDbDimCostumer"
+				},
+				{
+					"dataset": {
+						"referenceName": "sqlDBproductDim",
+						"type": "DatasetReference"
+					},
+					"name": "dimproductsnpse"
+				},
+				{
+					"name": "cacheSinkCustomerSK"
+				}
+			],
+			"transformations": [
+				{
+					"name": "SalesOrderHeaderJoinSalesOrderDetail",
+					"description": "Inner Join on 'SalesOrderHeaderStream' and 'SalesOrderDetails'"
+				},
+				{
+					"name": "FactSales"
+				},
+				{
+					"name": "DimCostumer"
+				},
+				{
+					"name": "DimProductCategory"
+				},
+				{
+					"name": "DimProduct"
+				},
+				{
+					"name": "DimNullColors"
+				},
+				{
+					"name": "DerivedTotalDueColumn"
+				},
+				{
+					"name": "SurrogateKeyProductStream"
+				},
+				{
+					"name": "SurrogateCostumerKey"
+				},
+				{
+					"name": "DeriveSurrogateCustomerSK"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          SalesOrderID as integer,",
+				"          RevisionNumber as integer,",
+				"          OrderDate as timestamp,",
+				"          DueDate as timestamp,",
+				"          ShipDate as timestamp,",
+				"          Status as integer,",
+				"          OnlineOrderFlag as boolean,",
+				"          SalesOrderNumber as string,",
+				"          PurchaseOrderNumber as string,",
+				"          AccountNumber as string,",
+				"          CustomerID as integer,",
+				"          ShipToAddressID as integer,",
+				"          BillToAddressID as integer,",
+				"          ShipMethod as string,",
+				"          CreditCardApprovalCode as string,",
+				"          SubTotal as decimal(19,4),",
+				"          TaxAmt as decimal(19,4),",
+				"          Freight as decimal(19,4),",
+				"          TotalDue as decimal(19,4),",
+				"          Comment as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SalesOrderHeaderStream",
+				"source(output(",
+				"          SalesOrderID as integer,",
+				"          SalesOrderDetailID as integer,",
+				"          OrderQty as integer,",
+				"          ProductID as integer,",
+				"          UnitPrice as decimal(19,4),",
+				"          UnitPriceDiscount as decimal(19,4),",
+				"          LineTotal as decimal(38,6),",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SalesOrderDetails",
+				"source(output(",
+				"          CustomerID as integer,",
+				"          NameStyle as boolean,",
+				"          Title as string,",
+				"          FirstName as string,",
+				"          MiddleName as string,",
+				"          LastName as string,",
+				"          Suffix as string,",
+				"          CompanyName as string,",
+				"          SalesPerson as string,",
+				"          EmailAddress as string,",
+				"          Phone as string,",
+				"          PasswordHash as string,",
+				"          PasswordSalt as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'Select * FROM SalesLT.Customer WHERE CustomerID <20000',",
+				"     format: 'query') ~> SqlCostumer",
+				"source(output(",
+				"          ProductCategoryID as integer,",
+				"          ParentProductCategoryID as integer,",
+				"          Name as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SqlProductCategory",
+				"source(output(",
+				"          ProductID as integer,",
+				"          Name as string,",
+				"          ProductNumber as string,",
+				"          Color as string,",
+				"          StandardCost as decimal(19,4),",
+				"          ListPrice as decimal(19,4),",
+				"          Size as string,",
+				"          Weight as decimal(8,2),",
+				"          ProductCategoryID as integer,",
+				"          ProductModelID as integer,",
+				"          SellStartDate as timestamp,",
+				"          SellEndDate as timestamp,",
+				"          DiscontinuedDate as timestamp,",
+				"          ThumbNailPhoto as binary,",
+				"          ThumbnailPhotoFileName as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SqlProduct",
+				"source(output(",
+				"          MaxCustomerSK as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT MAX(CustomerSK) AS \\'MaxCustomerSK\\' from dbo.DimCustomer',",
+				"     format: 'query') ~> MaxCostumerSK",
+				"SalesOrderHeaderStream, SalesOrderDetails join(SalesOrderHeaderStream@SalesOrderID == SalesOrderDetails@SalesOrderID,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> SalesOrderHeaderJoinSalesOrderDetail",
+				"SalesOrderHeaderJoinSalesOrderDetail select(mapColumn(",
+				"          SalesOrderID = SalesOrderHeaderStream@SalesOrderID,",
+				"          OrderDate,",
+				"          CustomerID,",
+				"          SubTotal,",
+				"          TaxAmt,",
+				"          Freight,",
+				"          Comment,",
+				"          OrderQty,",
+				"          ProductID,",
+				"          UnitPrice,",
+				"          UnitPriceDiscount,",
+				"          LineTotal",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> FactSales",
+				"SqlCostumer select(mapColumn(",
+				"          CustomerID,",
+				"          CompanyName",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> DimCostumer",
+				"SqlProduct, SqlProductCategory join(SqlProduct@ProductCategoryID == SqlProductCategory@ProductCategoryID,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> DimProductCategory",
+				"DimProductCategory select(mapColumn(",
+				"          ProductID,",
+				"          ProductNumber,",
+				"          Color,",
+				"          ProductCategoryID = SqlProduct@ProductCategoryID,",
+				"          ProductCategoryName = SqlProductCategory@Name",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> DimProduct",
+				"DimProduct filter(!(isNull(Color))) ~> DimNullColors",
+				"FactSales derive(TotalDue = add(Freight,add(SubTotal,TaxAmt))) ~> DerivedTotalDueColumn",
+				"DimNullColors keyGenerate(output(ProductSk as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> SurrogateKeyProductStream",
+				"DimCostumer keyGenerate(output(CostumerSK as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> SurrogateCostumerKey",
+				"SurrogateCostumerKey derive(CostumerSK = CostumerSK+cacheSinkCustomerSK#outputs()[1].MaxCustomerSK) ~> DeriveSurrogateCustomerSK",
+				"DerivedTotalDueColumn sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          SalesOrderID,",
+				"          OrderDate,",
+				"          CustomerID,",
+				"          SubTotal,",
+				"          TaxAmt,",
+				"          Freight,",
+				"          TotalDue,",
+				"          OrderQty,",
+				"          ProductID,",
+				"          UnitPrice,",
+				"          UnitPriceDiscount,",
+				"          LineTotal",
+				"     )) ~> sqlFactSales",
+				"DeriveSurrogateCustomerSK sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          CustomerSK as integer,",
+				"          CustomerID as integer,",
+				"          CompanyName as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          CustomerSK = CostumerSK,",
+				"          CustomerID,",
+				"          CompanyName",
+				"     )) ~> SqlDbDimCostumer",
+				"SurrogateKeyProductStream sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          ProductSK as integer,",
+				"          ProductID as integer,",
+				"          ProductNumber as string,",
+				"          Color as string,",
+				"          ProductCategoryID as integer,",
+				"          ProductCategoryName as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          ProductID,",
+				"          ProductNumber,",
+				"          Color,",
+				"          ProductCategoryID,",
+				"          ProductCategoryName,",
+				"          ProductSK = ProductSk",
+				"     )) ~> dimproductsnpse",
+				"MaxCostumerSK sink(validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     store: 'cache',",
+				"     format: 'inline',",
+				"     output: false,",
+				"     saveOrder: 1) ~> cacheSinkCustomerSK"
+			]
+		}
+	}
+}

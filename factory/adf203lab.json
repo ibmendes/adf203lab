@@ -1,0 +1,9 @@
+{
+	"name": "adf203lab",
+	"location": "brazilsouth",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "4b8d919a-e877-4133-b571-26bdc8fe819c",
+		"tenantId": "86e93a2d-b7c0-4858-9020-9732a3aa4a5d"
+	}
+}

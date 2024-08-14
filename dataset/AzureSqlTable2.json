@@ -1,8 +1,8 @@
 {
-	"name": "dbActivityLog",
+	"name": "AzureSqlTable2",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureSqlDatabase1",
+			"referenceName": "appdb",
 			"type": "LinkedServiceReference"
 		},
 		"annotations": [],
